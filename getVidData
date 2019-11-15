@@ -1,0 +1,13 @@
+# CSP554 proj
+# Author: Niti Wattanasirichaigoon
+# Nov 14, 2019
+#
+# Accesses the YouTube API via Key and fetches video data from 7 days ago
+
+apiKey = "AIzaSyDTAgOZ2J7dIEKLQtVb5KMLhy0a8JuhBBU"
+from googleapiclient.discovery import build
+youtube = build('youtube', 'v3', developerKey=apiKey)
+request = youtube.search().list(part='snippet', type='video', q='pokemon')
+result = request.execute()
+
+print(result)
