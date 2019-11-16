@@ -1,13 +1,93 @@
-# CSP554 proj
-# Author: Niti Wattanasirichaigoon
-# Nov 14, 2019
+# getVidData.py
 #
-# Accesses the YouTube API via Key and fetches video data from 7 days ago
+# part of CSP554 proj
+# Author: Niti Wattanasirichaigoon
+# created: Nov 14, 2019
+#
+# Accesses the YouTube API v3 via Key and fetches video data from 7 days ago
+# The sorting relevance is according to the current youtube algorithm
+# Data fields: vid_id, channel_id, subscribers, pub_date, category_id, duration_in_s, views
+# Exported as a CSV file with 500 records
 
-apiKey = "AIzaSyDTAgOZ2J7dIEKLQtVb5KMLhy0a8JuhBBU"
 from googleapiclient.discovery import build
-youtube = build('youtube', 'v3', developerKey=apiKey)
-request = youtube.search().list(part='snippet', type='video', q='pokemon')
-result = request.execute()
+import datetime
+import csv
 
-print(result)
+apiKey = "AIzaSyCTvSudB2KvKMFDQfJRfYId9S-w7ZFmWl8"
+youtube = build('youtube', 'v3', developerKey=apiKey)
+
+# get dates of videos 7-8 days ago
+today = datetime.date.today()
+startTime = (today - datetime.timedelta(days=7)).strftime('%Y-%m-%dT%H:%M:%SZ')
+endTime = (today - datetime.timedelta(days=6)).strftime('%Y-%m-%dT%H:%M:%SZ')
+
+
+def convert_youTube_duration_to_seconds(duration):
+    # code from https://stackoverflow.com/questions/15596753/how-do-i-get-video-durations-with-youtube-api-version-3
+    day_time = duration.split('T')
+    day_duration = day_time[0].replace('P', '')
+    day_list = day_duration.split('D')
+    if len(day_list) == 2:
+        day = int(day_list[0]) * 60 * 60 * 24
+        day_list = day_list[1]
+    else:
+        day = 0
+        day_list = day_list[0]
+    hour_list = day_time[1].split('H')
+    if len(hour_list) == 2:
+        hour = int(hour_list[0]) * 60 * 60
+        hour_list = hour_list[1]
+    else:
+        hour = 0
+        hour_list = hour_list[0]
+    minute_list = hour_list.split('M')
+    if len(minute_list) == 2:
+        minute = int(minute_list[0]) * 60
+        minute_list = minute_list[1]
+    else:
+        minute = 0
+        minute_list = minute_list[0]
+    second_list = minute_list.split('S')
+    if len(second_list) == 2:
+        second = int(second_list[0])
+    else:
+        second = 0
+    return day + hour + minute + second
+
+
+with open('video_data.csv', mode='w') as video_data:
+    data_writer = csv.writer(video_data, delimiter=',', quotechar='"', quoting=csv.QUOTE_MINIMAL, lineterminator='\n')
+    next_page = ""
+    vid_count = 0
+    for i in range(0, 9):
+        # loops 10 times because maxResults per page is 50
+        request = youtube.search().list(part='snippet',
+                                        type='video',
+                                        maxResults=50,
+                                        pageToken=next_page,
+                                        publishedAfter=startTime,
+                                        publishedBefore=endTime,
+                                        q='')
+        result = request.execute()
+
+        for item in result['items']:
+            vid_id = item['id']['videoId']
+            channel_id = item['snippet']['channelId']
+            pub_date = item['snippet']['publishedAt']
+            channel_stats = youtube.channels().list(part='statistics', id=channel_id).execute()
+            subscribers = channel_stats['items'][0]['statistics']['subscriberCount']
+            vid_snippet = youtube.videos().list(part='snippet', id=vid_id).execute()
+            category_id = vid_snippet['items'][0]['snippet']['categoryId']
+            vid_cont = youtube.videos().list(part='contentDetails', id=vid_id).execute()
+            duration = vid_cont['items'][0]['contentDetails']['duration']
+            duration_in_s = convert_youTube_duration_to_seconds(duration)
+            vid_stats = youtube.videos().list(part='statistics', id=vid_id).execute()
+            views = vid_stats['items'][0]['statistics']['viewCount']
+
+            data_writer.writerow([vid_id, channel_id, subscribers, pub_date, category_id, duration_in_s, views])
+            vid_count += 1
+            if vid_count % 20 == 0:
+                print(str(vid_count) + " videos processed.")
+
+        next_page = result['nextPageToken']
+
