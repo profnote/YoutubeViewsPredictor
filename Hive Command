@@ -1,0 +1,30 @@
+// Create Table for Youtube Data
+create table if not exists video_data (
+vid_id string,
+channel_id string,
+subscribers int,
+pub_date string,
+category_id string,
+duration_in_s int,
+views int)
+row format delimited fields terminated by ','
+lines terminated by '\n'
+stored as TEXTFILE;
+
+// Create Table for join
+create table if not exists video_category (
+category_id string,
+category_name string)
+row format delimited fields terminated by ','
+lines terminated by '\n'
+stored as TEXTFILE;
+
+// Load Data
+load data local inpath './video_data.csv' into table video_data;
+load data local inpath './video_category.csv' into table video_category;
+
+// Query Command 
+select a.category_name, max(views), avg(views), 
+max(duration_in_s), avg(duration_in_s), 
+max(subscribers), avg(subscribers) 
+from video_data b join video_category a on b.category_id = a.category_id group by a.category_name;
