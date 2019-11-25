@@ -1,0 +1,16 @@
+//Creation relation
+video_data = load 'video_data.csv' using PigStorage(',') AS 
+(vid_id:chararray, 
+channel_id:chararray, subscribers:int, pub_date:chararray, category_id :chararray, duration_in_s:int, views:int);
+
+//Make a group by category_id
+video_data_category = group video_data by category_id;
+
+//Creation relation
+video_data_view = FOREACH video_data_category GENERATE FLATTEN(group), 
+MAX(video_data.views), AVG(video_data.views),
+MAX(video_data.duration_in_s), AVG(video_data.duration_in_s),
+MAX(video_data.subscribers), AVG(video_data.subscribers);
+
+//Execute
+dump video_data_view

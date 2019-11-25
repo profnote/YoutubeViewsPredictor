@@ -1,0 +1,34 @@
+from pyspark.sql.types import StructField,IntegerType, StructType,StringType
+
+newDF = [StructField('vid_id',StringType(),True),StructField('channel_id',StringType(),True),
+StructField('subscribers',IntegerType(),True),StructField('pub_date',StringType(),True),
+StructField('category',IntegerType(),True),StructField('duration',IntegerType(),True),StructField('views',IntegerType(),True)]
+
+
+finalStruct = StructType(fields = newDF)
+
+df = spark.read.csv('/final/video_data.csv', schema = finalStruct)
+
+df.show() 
+
+import pyspark.sql.functions as f
+
+df.createTempView("data") 
+
+df1 = spark.sql("select * from data")
+
+
+df1 = spark.sql("select category, max(views), avg(views), 
+max(duration), avg(duration), max(subscribers), avg(subscribers) f
+rom data  group by category order by category")
+
+Import time
+
+start = time.time(); df1 = spark.sql
+("select category, max(views), avg(views), max(duration), avg(duration), 
+max(subscribers), avg(subscribers) from data  group by category order by category"); 
+df1.show(); 
+
+end = time.time(); 
+
+runTime = end - start; runTime
