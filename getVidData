@@ -13,7 +13,7 @@ from googleapiclient.discovery import build
 import datetime
 import csv
 
-apiKey = "AIzaSyCTvSudB2KvKMFDQfJRfYId9S-w7ZFmWl8"
+apiKey = "insert api key here"
 youtube = build('youtube', 'v3', developerKey=apiKey)
 
 # get dates of videos 7-8 days ago
